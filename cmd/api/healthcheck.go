@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 )
 
@@ -15,22 +14,9 @@ func (app *application) healthcheckHandler(w http.ResponseWriter, r *http.Reques
 		"version":     version,
 	}
 
-	// passing map to the json.marshal() function
-	// marshal returns a []byte slice containing encoded json
-	// if error, log it and send a generic err msg
-	js, err := json.Marshal(data)
+	err := app.writeJSON(w, http.StatusOK, data, nil)
 	if err != nil {
 		app.logger.Println(err)
-		http.Error(w, "the server encountered a problem and could not process your request", http.StatusInternalServerError)
-		return
+		http.Error(w, "Server encountered a problem, request unsuccessful", http.StatusInternalServerError)
 	}
-
-	// append a newline to the json
-	js = append(js, '\n')
-
-	// at this point, the encoding should work
-	w.Header().Set("Content-Type", "application/json")
-
-	// w.write() to send the []byte slice containing json as the response
-	w.Write(js)
 }
