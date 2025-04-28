@@ -29,7 +29,7 @@ func (app *application) readIDParam(r *http.Request) (int64, error) {
 // containing any additional http requests to be inccluded in res
 func (app *application) writeJSON(w http.ResponseWriter, status int, data any, headers http.Header) error {
 	// encode data to json, returning error if there was one
-	js, err := json.Marshal(data)
+	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
 	}
