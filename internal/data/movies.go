@@ -4,13 +4,12 @@ import "time"
 
 // NOTE -> CAPITALIZE FIRST LETTER MEANS TO BE VISIBLE WHEN EXPORTED!
 type Movie struct {
-	ID int64
-	// Unique integer ID for the movie
-	CreatedAt time.Time // Timestamp for when the movie is added to our database
-	Title     string    // Movie title
-	Year      int32     // Movie release year
-	Runtime   int32     // Movie runtime (in minutes)
-	Genres    []string  // Slice of genres for the movie (romance, comedy, etc.)
-	Version   int32     // The version number starts at 1 and will be incremented each
+	ID        int64     `json:"id"`         // Unique integer ID for the movie
+	CreatedAt time.Time `json:"created_at"` // Timestamp for when the movie is added to our database
+	Title     string    `json:"title"`      // Movie title
+	Year      int32     `json:"year"`       // Movie release year
+	Runtime   int32     `json:"runtime"`    // Movie runtime (in minutes)
+	Genres    []string  `json:genres`       // Slice of genres for the movie (romance, comedy, etc.)
+	Version   int32     `json:"version"`    // The version number starts at 1 and will be incremented each
 	// time the movie information is updated
 }
