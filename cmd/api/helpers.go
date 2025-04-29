@@ -11,6 +11,9 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// define an envelope type
+type envelope map[string]any
+
 // retrieve the 'id' url param from the current req. context
 // convert it to an integer and return it
 // if unsuccessful, return 0 and error
