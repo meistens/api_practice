@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,9 +18,11 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		Genres  []string `json:"genres"`
 	}
 
-	// init a new json.decoder() instance which reads from the request body
-	// us decode() method to decode the body contents into the input struct
-	err := json.NewDecoder(r.Body).Decode(&input)
+	// use the new readjson() helper to decode the request body
+	// into the input struct
+	// if this returns an error, send the client a error msg
+	// along with a 400 bad request status code
+	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return
