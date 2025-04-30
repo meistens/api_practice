@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -10,7 +11,22 @@ import (
 
 // add createMovieHandler for the POST /v1/movies endpoint
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "create a new movie")
+	// declare an anon struct to hold info expected to be in the http request body
+	var input struct {
+		Title   string   `json:"title"`
+		Year    int32    `json:"year"`
+		Runtime int32    `json:"runtime"`
+		Genres  []string `json:"genres"`
+	}
+
+	// init a new json.decoder() instance which reads from the request body
+	// us decode() method to decode the body contents into the input struct
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+	fmt.Fprintf(w, "%+v\n", input)
 }
 
 // showMovieHandler made simpler via readIDParams() in cmd/api/helpers.go
