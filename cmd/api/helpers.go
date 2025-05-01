@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"maps"
 
@@ -53,8 +54,19 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data any, h
 
 // JSON err decoding func
 func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dest any) error {
+	// use http.Maxbytereader() to limit size of the request body to 1MiB
+	maxBytes := 1_048_576
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
+
+	// init json.decoder
+	// call disallowunknownfields() method on it before decoding
+	// this means if json from body included any field that cannot be mapped
+	// the decoder will return an error instead of ignoring
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+
 	// decode request body into the target dest
-	err := json.NewDecoder(r.Body).Decode(dest)
+	err := dec.Decode(dest)
 	if err != nil {
 		// if there is an error during decoding, start trige
 		var syntaxError *json.SyntaxError
@@ -85,6 +97,18 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dest an
 		case errors.Is(err, io.EOF):
 			return errors.New("body must not be empty")
 
+		// if json contains a field which cannot be mapped
+		// to target dest, decode() will return an error msg in the format
+		// "json:unknown field: "<name>""
+		case strings.HasPrefix(err.Error(), "json: unknown field "):
+			fieldName := strings.TrimPrefix(err.Error(), "json: unknown field ")
+			return fmt.Errorf("body contains unknown key %s", fieldName)
+
+		// if request body exceeds 1MiB, decode will fail with
+		// req body too large error
+		case err.Error() == "http: request body too large":
+			return fmt.Errorf("body must not be larger than %d bytes", maxBytes)
+
 		// if a non-nil pointer is passed to decode()
 		// return a invalid unmarshal error
 		case errors.As(err, &invalidUnmarshalError):
@@ -94,6 +118,14 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dest an
 		default:
 			return err
 		}
+	}
+
+	// call decode() again using a ptr to an empty anon struct
+	// as the dest.
+	// if body = single json, return eof error, else return stuff
+	err = dec.Decode(&struct{}{})
+	if err != io.EOF {
+		return errors.New("body must only contain a single json value")
 	}
 	return nil
 }
