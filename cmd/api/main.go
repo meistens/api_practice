@@ -11,6 +11,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/meistens/api_practice/internal/data"
 )
 
 // declare string containing semver
@@ -38,11 +39,10 @@ type config struct {
 
 // define app struct to hold deps for the HTTP handlers,
 // helpers, and middleware
-// for now, it contains the copy of the config struct and
-// a logger
 type application struct {
 	config config
 	logger *log.Logger
+	models data.Models
 }
 
 func main() {
@@ -80,14 +80,14 @@ func main() {
 	// defer a call to db.close() so that conn. pool is closed before
 	// main() exits
 	defer db.Close()
-
 	logger.Printf("conn. pool established")
 
 	// declare an instance of the app struct
-	// containing the config struct and logger
+	// containing the config struct, logger, models
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	// declare a new servemux and add a /v1/healthcheck route

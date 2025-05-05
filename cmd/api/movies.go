@@ -29,31 +29,42 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	movie := &data.Movie{
+		Title:   input.Title,
+		Year:    input.Year,
+		Runtime: input.Runtime,
+		Genres:  input.Genres,
+	}
+
 	// init. new validator instance
+	// check if there are no errors (check validator.go for a list of em)
 	v := validator.New()
-
-	// use check() method to execute validation checks
-	v.Check(input.Title != "", "title", "must be provided")
-	v.Check(len(input.Title) <= 500, "title", "must not be more than 500")
-	v.Check(input.Year != 0, "year", "must be provided")
-	v.Check(input.Year >= 1888, "year", "must be greater than 1888")
-	v.Check(input.Year <= int32(time.Now().Year()), "year", "must not be in the future")
-	v.Check(input.Runtime != 0, "runtime", "must be provided")
-	v.Check(input.Runtime > 0, "runtime", "must be a positive integer")
-	v.Check(input.Genres != nil, "genres", "must be provided")
-	v.Check(len(input.Genres) >= 1, "genres", "must contain at least 1 genre")
-	v.Check(len(input.Genres) <= 5, "genres", "must not contain more than 5 genres")
-
-	// check for unique values in the genre list
-	v.Check(validator.Unique(input.Genres), "genres", "must not contain duplicate values")
-
-	// use valid() method to see if any checks failed
-	if !v.Valid() {
+	if data.ValidateMovie(v, movie); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	fmt.Fprintf(w, "%+v\n", input)
+	// call insert() method on the movies model, passing in a ptr to the
+	// validated movie struct
+	// this will create a record in the database and update the movie struct
+	// with the system-generated info
+	err = app.models.Movies.Insert(movie)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+	// include location header to let the client know which url they can find
+	// the newly created resource by making an empty http.Header map and using Set()
+	// to include the header
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
+
+	// write a json response with a 201 created status code, movie data
+	// in the response body, and location header
+	err = app.writeJSON(w, http.StatusCreated, envelope{"movie": movie}, headers)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
 
 // showMovieHandler made simpler via readIDParams() in cmd/api/helpers.go
