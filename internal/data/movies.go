@@ -103,7 +103,21 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 
 // placeeholder for updating a specific record
 func (m MovieModel) Update(movie *Movie) error {
-	return nil
+	query := `UPDATE movies
+	SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
+	WHERE id = $5
+	RETURNING version`
+
+	// create an args slice containing the values for the placeholder params
+	args := []any{
+		movie.Title,
+		movie.Year,
+		movie.Runtime,
+		pq.Array(movie.Genres),
+		movie.ID,
+	}
+	// scanning the new version into the movie struct instead
+	return m.DB.QueryRow(query, args...).Scan(&movie.Version)
 }
 
 // placeholder for deleting a specific record
