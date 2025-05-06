@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/meistens/api_practice/internal/data"
 	"github.com/meistens/api_practice/internal/validator"
@@ -75,14 +75,17 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// create new instance of the Movie struct
-	movie := data.Movie{
-		ID:        id,
-		CreatedAt: time.Now(),
-		Title:     "Ted",
-		Runtime:   120,
-		Genres:    []string{"drama", "romance", "war"},
-		Version:   1,
+	// call Get() to fetch the data fora specific movie
+	// also add a errors.is() to know if it returned an error so as to send a 404
+	movie, err := app.models.Movies.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
 	}
 
 	// create an envelope{"movie": movie} instance and pass it to wrtiejson()

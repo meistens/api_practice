@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/lib/pq"
@@ -64,7 +65,40 @@ func (m MovieModel) Insert(movie *Movie) error {
 
 // placeholder for fetchig specific record
 func (m MovieModel) Get(id int64) (*Movie, error) {
-	return nil, nil
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	// define sql query for retrieving data
+	query := `SELECT id, created_at, title, year, runtime, genres, version FROM movies WHERE id = $1`
+
+	// declare movie struct to hold the data returned by query
+	var movie Movie
+
+	// execute with queryrow(), passing id as placeholder param
+	// scan the response data into the field of the movie struct
+	// use pq.array() to convert the scan target for genres column
+	err := m.DB.QueryRow(query, id).Scan(&movie.ID,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		pq.Array(&movie.Genres),
+		&movie.Version)
+
+	// err handling, if no matching movie found, scan will return
+	// a sql.errnorows
+	// instead we use the custom error instead
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	// otherwise return a pointer to the movie struct
+	return &movie, nil
 }
 
 // placeeholder for updating a specific record
