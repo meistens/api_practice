@@ -122,5 +122,31 @@ func (m MovieModel) Update(movie *Movie) error {
 
 // placeholder for deleting a specific record
 func (m MovieModel) Delete(id int64) error {
+	// return error if id less than 1
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := `DELETE FROM movies
+	WHERE id = $1`
+
+	// execute querty using Exec() method, passing the id variable as
+	// the value for the placeholder param
+	// it returns an sql.result object
+	result, err := m.DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	// call rowsaffected() on the sql.result object
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	// if no rows affected, it means no records in the movie table
+	// so error
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
 	return nil
 }
