@@ -116,11 +116,13 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	// declare an input struct to hold the expected data from the client
+	// also, use pointers to allow for partial update of a particular field
+	// instead of all fields if necessary
 	var input struct {
-		Title   string       `json:"title"`
-		Year    int32        `json:"year"`
-		Runtime data.Runtime `json:"runtime"`
-		Genres  []string     `json:"genres"`
+		Title   *string       `json:"title"`
+		Year    *int32        `json:"year"`
+		Runtime *data.Runtime `json:"runtime"`
+		Genres  []string      `json:"genres"`
 	}
 	// read the json request body data into the input struct
 	err = app.readJSON(w, r, &input)
@@ -130,10 +132,20 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 	}
 	// copy the values from the request body to the appropriate fields of the
 	// movie record
-	movie.Title = input.Title
-	movie.Year = input.Year
-	movie.Runtime = input.Runtime
-	movie.Genres = input.Genres
+	// due to use of ptrs, they are dereferenced using * to get the underlying value
+	// before assigning to the movie record
+	if input.Title != nil {
+		movie.Title = *input.Title
+	}
+	if input.Year != nil {
+		movie.Year = *input.Year
+	}
+	if input.Runtime != nil {
+		movie.Runtime = *input.Runtime
+	}
+	if input.Genres != nil {
+		movie.Genres = input.Genres
+	}
 
 	// validate
 	v := validator.New()
