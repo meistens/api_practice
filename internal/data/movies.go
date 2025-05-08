@@ -103,6 +103,7 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 
 // placeeholder for updating a specific record
 func (m MovieModel) Update(movie *Movie) error {
+	// TODO: implement uuid for version
 	query := `UPDATE movies
 	SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
 	WHERE id = $5 AND VERSION =$6
