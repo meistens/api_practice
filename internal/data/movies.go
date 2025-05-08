@@ -58,10 +58,14 @@ func (m MovieModel) Insert(movie *Movie) error {
 	// in the query
 	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
 
-	// queryrow() to execute the sql on conn. pool
+	// create context with 3s timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// queryrowcontext() to execute the sql on conn. pool, pass the ctx as first arg
 	// passing int the args slice as a varidic param and scanning
 	// the generated id, created_at and version into the movie struct
-	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
 // placeholder for fetchig specific record
@@ -85,7 +89,8 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 	// the contect with the deadline as dirst arg
 	// scan the response data into the field of the movie struct
 	// use pq.array() to convert the scan target for genres column
-	err := m.DB.QueryRowContext(ctx, query, id).Scan(&movie.ID,
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
+		&movie.ID,
 		&movie.CreatedAt,
 		&movie.Title,
 		&movie.Year,
@@ -125,9 +130,15 @@ func (m MovieModel) Update(movie *Movie) error {
 		movie.ID,
 		movie.Version,
 	}
+
+	// context...
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// queryrowcontext()
 	// execute sql query, if no matching rows found, then movie version
 	// has changed (or has been deleted), return to errConflict
-	err := m.DB.QueryRow(query, args...).Scan(&movie.Version)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -149,10 +160,14 @@ func (m MovieModel) Delete(id int64) error {
 	query := `DELETE FROM movies
 	WHERE id = $1`
 
-	// execute querty using Exec() method, passing the id variable as
+	// context
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// execute query using ExecContext() method, passing the id variable as
 	// the value for the placeholder param
 	// it returns an sql.result object
-	result, err := m.DB.Exec(query, id)
+	result, err := m.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
