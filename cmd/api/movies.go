@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/meistens/api_practice/internal/data"
 	"github.com/meistens/api_practice/internal/validator"
@@ -115,6 +116,16 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		}
 		return
 	}
+
+	// if request contains a x-expected-version header, verify that the movie
+	// version in the db matches the expected versions specified
+	if r.Header.Get("X-Expected-Version") != "" {
+		if strconv.FormatInt(int64(movie.Version), 32) != r.Header.Get("X-Expected-Version") {
+			app.editConflictResponse(w, r)
+			return
+		}
+	}
+
 	// declare an input struct to hold the expected data from the client
 	// also, use pointers to allow for partial update of a particular field
 	// instead of all fields if necessary
