@@ -98,7 +98,7 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 
 // updteMovieHandler for PUT endpoint
 func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
-	// ectract movie id from url
+	// extract movie id from url
 	id, err := app.readIDParam(r)
 	if err != nil {
 		app.notFoundResponse(w, r)
@@ -156,9 +156,15 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 	// pass the updated record to the update() method
 	err = app.models.Movies.Update(movie)
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.editConflictResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
 		return
 	}
+
 	// write updated record in a json response
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
 	if err != nil {

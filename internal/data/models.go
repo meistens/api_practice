@@ -7,8 +7,10 @@ import (
 
 // custom errRecordnotfound error will return from the Get() method
 // if a movie query doesn't exist
+// errEditConflict for optimistic locking to prevent a race condition
 var (
 	ErrRecordNotFound = errors.New("record not foud")
+	ErrEditConflict   = errors.New("edit conflict")
 )
 
 // Models struct wraps the MovieModel
