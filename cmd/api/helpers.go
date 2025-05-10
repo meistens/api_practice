@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"maps"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/meistens/api_practice/internal/validator"
 )
 
 // define an envelope type
@@ -128,4 +130,59 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dest an
 		return errors.New("body must only contain a single json value")
 	}
 	return nil
+}
+
+// readString helper func.
+// returns a string value from the query string, or the provided default value
+// if no matching key is found
+func (app *application) readString(qs url.Values, key string, defaultValue string) string {
+	// extract the value from a given key from the query string
+	// if no key exists, return the empty string
+	s := qs.Get(key)
+
+	// if no key exists, return the default value
+	if s == "" {
+		return defaultValue
+	}
+	// else return the string
+	return s
+}
+
+// readCSV helper func.
+// reads a string value from the query string, splits it into a slice on the comma char
+// if no matching key, return the provided default value
+func (app *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+	// extract value from query string
+	csv := qs.Get(key)
+
+	// if no key exists, or value is empty, return default value
+	if csv == "" {
+		return defaultValue
+	}
+	// otherwise parse the value into a []string slice and return the default value
+	return strings.Split(csv, ",")
+}
+
+// readInt helper reads a stringvalue from the query string, converts it to an
+// int before returning
+// if no matching key found, return the provided default value
+// if it cannot be converted, record err msg in provided validator instance
+func (app *application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+	// extract value from query string
+	s := qs.Get(key)
+
+	// if no key, or is empty, return default
+	if s == "" {
+		return defaultValue
+	}
+	// convert value to an int
+	// if it fails, add an err msg to the validator instance
+	// return the default value
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddError(key, "must be an int value")
+		return defaultValue
+	}
+	// otherwise return the converted int value
+	return i
 }
