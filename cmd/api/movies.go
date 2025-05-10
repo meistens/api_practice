@@ -214,11 +214,9 @@ func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 	// define an input struct to hold the values from the request query string
 	// plus to differentiate it from the other structs used by other handlers
 	var input struct {
-		Title    string
-		Genres   []string
-		Page     int
-		PageSize int
-		Sort     string
+		Title        string
+		Genres       []string
+		data.Filters // future me sees this, make a folder of debuffs for different classes similar to this, you know what to do when you see this
 	}
 
 	// new validator instance
@@ -234,12 +232,12 @@ func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 	input.Genres = app.readCSV(qs, "genres", []string{})
 
 	// get the page and page_size query string values as ints
-	input.Page = app.readInt(qs, "page", 1, v)
-	input.PageSize = app.readInt(qs, "page_size", 20, v)
+	input.Filters.Page = app.readInt(qs, "page", 1, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
 
 	// extract the sort query string value, falling back to 'id' if not provided
 	// by the client
-	input.Sort = app.readString(qs, "sort", "id")
+	input.Filters.Sort = app.readString(qs, "sort", "id")
 
 	// check Validator instance for any errors and use the failedValidationResponse()
 	// helper to send the client a response if necessary
