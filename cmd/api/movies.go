@@ -247,6 +247,16 @@ func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
-	// dump contents of input struct in an http response
-	fmt.Fprintf(w, "%+v\n", input)
+
+	// call getall() to retrieve movies, passing in the various filter params
+	movies, err := app.models.Movies.GetAll(input.Title, input.Genres, input.Filters)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+	// send json response containing movie data
+	err = app.writeJSON(w, http.StatusOK, envelope{"movies": movies}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
