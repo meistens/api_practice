@@ -188,6 +188,7 @@ func (m MovieModel) Delete(id int64) error {
 // GetAll func, returns a slice of movies
 func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
 	// filter conditions for title and genres, can be used singly or at once
+	// \dF for lang config., till then catch up on postgres documentation
 	query := `SELECT id, created_at, title, year, runtime, genres, version
 	FROM movies
 	WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
