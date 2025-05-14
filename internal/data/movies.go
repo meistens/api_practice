@@ -187,9 +187,11 @@ func (m MovieModel) Delete(id int64) error {
 
 // GetAll func, returns a slice of movies
 func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
-	// sql query
+	// filter conditions for title and genres, can be used singly or at once
 	query := `SELECT id, created_at, title, year, runtime, genres, version
 	FROM movies
+	WHERE (LOWER(title) = LOWER($1) OR $1 = '')
+	AND (genres @> $2 OR $2 = '{}')
 	ORDER BY id`
 
 	// create a context with 3s timeout
@@ -197,8 +199,9 @@ func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*M
 	defer cancel()
 
 	// querycontext() to exec. query, returns a sql.rows resultset
-	// containing the results
-	rows, err := m.DB.QueryContext(ctx, query)
+	// pass the title and genres as placeholder params or you'd be getting
+	// missing parameters from postgres
+	rows, err := m.DB.QueryContext(ctx, query, title, pq.Array(genres))
 	if err != nil {
 		return nil, err
 	}
