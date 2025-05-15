@@ -187,8 +187,8 @@ func (m MovieModel) Delete(id int64) error {
 }
 
 // GetAll func, returns a slice of movies
-func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
-	query := fmt.Sprintf(`SELECT id, created_at, title, year, runtime, genres, version
+func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error) {
+	query := fmt.Sprintf(`SELECT count(*) OVER(), id, created_at, title, year, runtime, genres, version
 	FROM movies
 	WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
 	AND (genres @> $2 OR $2 = '{}')
@@ -205,11 +205,12 @@ func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*M
 	// pass the args slice above as a variadic param
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 	// defer call to rows.close() to ensure resultset closed before getall() returns
 	defer rows.Close()
 
+	totalRecords := 0
 	// init. empty slice to hold movie data
 	movies := []*Movie{}
 
@@ -220,6 +221,7 @@ func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*M
 
 		// scan values from row into Movie struct
 		err := rows.Scan(
+			&totalRecords, // scan count from window func. into totalRecords
 			&movie.ID,
 			&movie.CreatedAt,
 			&movie.Title,
@@ -229,7 +231,7 @@ func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*M
 			&movie.Version,
 		)
 		if err != nil {
-			return nil, err
+			return nil, Metadata{}, err
 		}
 		// add Movie struct to slice
 		movies = append(movies, &movie)
@@ -237,8 +239,10 @@ func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*M
 	// when rows.next() loop is done, call rows.err() to get any error
 	// thrown during its iteration
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
+
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
 	// slice should be returned if everything ok
-	return movies, nil
+	return movies, metadata, nil
 }
