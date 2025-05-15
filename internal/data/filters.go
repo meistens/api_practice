@@ -1,6 +1,12 @@
 package data
 
-import "github.com/meistens/api_practice/internal/validator"
+import (
+	"strings"
+
+	"slices"
+
+	"github.com/meistens/api_practice/internal/validator"
+)
 
 type Filters struct {
 	Page         int
@@ -18,4 +24,23 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 
 	// check that the sort param matches a value in the safelist
 	v.Check(validator.In(f.Sort, f.SortSafelist...), "sort", "invalid sort value")
+}
+
+// checks that the client-provided Sort field matches one of the entries in the safelist[]
+// if it does, extract the column name from the Sort field by stripping
+// the leading hyphen character (if one exists)
+func (f Filters) sortColumn() string {
+	if slices.Contains(f.SortSafelist, f.Sort) {
+		return strings.TrimPrefix(f.Sort, "-")
+	}
+	panic("unsafe sort parameter: " + f.Sort)
+}
+
+// return the sort direction (asc or desc) depending on the prefix
+// character of the sort field
+func (f Filters) sortDirection() string {
+	if strings.HasPrefix(f.Sort, "-") {
+		return "DESC"
+	}
+	return "ASC"
 }
