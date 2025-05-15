@@ -188,22 +188,22 @@ func (m MovieModel) Delete(id int64) error {
 
 // GetAll func, returns a slice of movies
 func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
-	// filter conditions for title and genres, can be used singly or at once
-	// \dF for lang config., till then catch up on postgres documentation
 	query := fmt.Sprintf(`SELECT id, created_at, title, year, runtime, genres, version
 	FROM movies
 	WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
 	AND (genres @> $2 OR $2 = '{}')
-	ORDER BY %s %s, id ASC`, filters.sortColumn(), filters.sortDirection())
+	ORDER BY %s %s, id ASC
+	LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
 
 	// create a context with 3s timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	// querycontext() to exec. query, returns a sql.rows resultset
-	// pass the title and genres as placeholder params or you'd be getting
-	// missing parameters from postgres
-	rows, err := m.DB.QueryContext(ctx, query, title, pq.Array(genres))
+	// collect values of sql query row into a slice
+	args := []any{title, pq.Array(genres), filters.limit(), filters.offset()}
+
+	// pass the args slice above as a variadic param
+	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
