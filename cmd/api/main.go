@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/meistens/api_practice/internal/data"
+	"github.com/meistens/api_practice/internal/jsonlog"
 )
 
 // declare string containing semver
@@ -41,7 +41,7 @@ type config struct {
 // helpers, and middleware
 type application struct {
 	config config
-	logger *log.Logger
+	logger *jsonlog.Logger
 	models data.Models
 }
 
@@ -67,20 +67,20 @@ func main() {
 
 	// init. a new logger which writes to stdout
 	// prefixed with current date and time
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	// call opendb() helper function to create conn. pool, passing the
 	// config struct
 	// if it returns an error, log it and exit
 	db, err := openDB(cfg)
 	if err != nil {
-		logger.Fatal(err)
+		logger.PrintFatal(err, nil)
 	}
 
 	// defer a call to db.close() so that conn. pool is closed before
 	// main() exits
 	defer db.Close()
-	logger.Printf("conn. pool established")
+	logger.PrintInfo("conn. pool established", nil)
 
 	// declare an instance of the app struct
 	// containing the config struct, logger, models
@@ -110,9 +110,12 @@ func main() {
 
 	// start server
 	// sheesh, way too much stuff to do using a built-in pkg
-	logger.Printf("starting %s server on %s", cfg.env, srv.Addr)
+	logger.PrintInfo("starting %s server on %s", map[string]string{
+		"addr": srv.Addr,
+		"env":  cfg.env,
+	})
 	err = srv.ListenAndServe()
-	logger.Fatal(err)
+	logger.PrintFatal(err, nil)
 }
 
 // opendb()

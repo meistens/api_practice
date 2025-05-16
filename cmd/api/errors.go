@@ -6,7 +6,11 @@ import (
 )
 
 func (app *application) logError(r *http.Request, err error) {
-	app.logger.Println(err)
+	// FINALLY, some use!!!!!!!!!!!!!
+	app.logger.PrintError(err, map[string]string{
+		"request_method": r.Method,
+		"request_url":    r.URL.String(),
+	})
 }
 
 // func. sends JSON-formatted msgs to the client with a given status code from other functions
