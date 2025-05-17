@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"golang.org/x/time/rate"
 )
 
 func (app *application) recoverPanic(next http.Handler) http.Handler {
@@ -22,6 +24,23 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 				app.serverErrorResponse(w, r, fmt.Errorf("%s", err))
 			}
 		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) rateLimit(next http.Handler) http.Handler {
+	// init. a new rate limiter which allows an average of 2reqs/s, max. 4reqs
+	// in a single burst
+	limiter := rate.NewLimiter(2, 4)
+
+	// function we are returning is a closure, which closes over the limiter
+	// variable
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// call limiter.ALlow() to see if the request is permitted
+		// if not, 429 called using rateLimitExceededResponse()
+		if !limiter.Allow() {
+			app.rateLimitExceededResponse(w, r)
+		}
 		next.ServeHTTP(w, r)
 	})
 }

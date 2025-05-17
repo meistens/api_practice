@@ -27,6 +27,6 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/movies", app.listMoviesHandler)
 
 	// return the httprouter instance, but with the panic recovery
-	// middleware
-	return app.recoverPanic(router)
+	// middleware, but now wrapped with ratelimit middleware
+	return app.recoverPanic(app.rateLimit(router))
 }
