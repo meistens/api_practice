@@ -72,33 +72,39 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	// function we are returning is a closure, which closes over the limiter
 	// variable
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// extract client IP addr from the request
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			app.serverErrorResponse(w, r, err)
-			return
-		}
+		// check if rate-limit is enabled
+		if app.config.limiter.enabled {
+			ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				app.serverErrorResponse(w, r, err)
+				return
+			}
 
-		// lock mutex to prevent this code from being executed concurrently
-		mu.Lock()
+			// lock mutex to prevent this code from being executed concurrently
+			mu.Lock()
 
-		// check to see if the IP addr already exists in the map
-		// if it doesn't, init. a new rate limiter, add the IP addr and
-		// limiter to the map
-		if _, found := clients[ip]; !found {
-			clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
-		}
+			// check to see if the IP addr already exists in the map
+			// if it doesn't, init. a new rate limiter, add the IP addr and
+			// limiter to the map
+			if _, found := clients[ip]; !found {
+				clients[ip] = &client{
+					limiter: rate.NewLimiter(rate.Limit(app.config.limiter.rps), app.config.limiter.burst),
+				}
+			}
 
-		// call Allow() method on rate limiter for the current IP addr
-		// if request isn't allowed, unlock mutex and send a 429
-		if !clients[ip].limiter.Allow() {
+			clients[ip].lastSeen = time.Now()
+
+			// call Allow() method on rate limiter for the current IP addr
+			// if request isn't allowed, unlock mutex and send a 429
+			if !clients[ip].limiter.Allow() {
+				mu.Unlock()
+				app.rateLimitExceededResponse(w, r)
+				return
+			}
+
+			// unlock mutex before calling the next handler in the chain
 			mu.Unlock()
-			app.rateLimitExceededResponse(w, r)
-			return
 		}
-
-		// unlock mutex before calling the next handler in the chain
-		mu.Unlock()
 		next.ServeHTTP(w, r)
 	})
 }
