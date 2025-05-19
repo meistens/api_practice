@@ -123,7 +123,7 @@ func main() {
 
 	// start server
 	// sheesh, way too much stuff to do using a built-in pkg
-	logger.PrintInfo("starting %s server on %s", map[string]string{
+	logger.PrintInfo("starting server", map[string]string{
 		"addr": srv.Addr,
 		"env":  cfg.env,
 	})
