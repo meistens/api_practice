@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
-	"net/http"
 	"os"
 	"time"
 
@@ -93,7 +91,7 @@ func main() {
 	// defer a call to db.close() so that conn. pool is closed before
 	// main() exits
 	defer db.Close()
-	logger.PrintInfo("conn. pool established", nil)
+	logger.PrintInfo("db conn. pool established", nil)
 
 	// declare an instance of the app struct
 	// containing the config struct, logger, models
@@ -103,32 +101,11 @@ func main() {
 		models: data.NewModels(db),
 	}
 
-	// declare a new servemux and add a /v1/healthcheck route
-	// which dispatches requests to the healthcheckhanddler
-	// method
-	//mux := http.NewServeMux()
-	//mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
-
-	// declare http server with some sensible timeout setting
-	// wich listens on the port provided in the config struct
-	// and uses the servemux created above as the handler
-	srv := &http.Server{
-		Addr: fmt.Sprintf(":%d", cfg.port),
-		// use the httprouter instance returned by app.routes() as the server handler
-		Handler:      app.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+	// call app.serve() to start server
+	err = app.serve()
+	if err != nil {
+		logger.PrintFatal(err, nil)
 	}
-
-	// start server
-	// sheesh, way too much stuff to do using a built-in pkg
-	logger.PrintInfo("starting server", map[string]string{
-		"addr": srv.Addr,
-		"env":  cfg.env,
-	})
-	err = srv.ListenAndServe()
-	logger.PrintFatal(err, nil)
 }
 
 // opendb()
