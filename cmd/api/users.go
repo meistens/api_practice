@@ -63,14 +63,18 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	// Call the Send() method on our Mailer, passing in the user's email address,
 	// name of the template file, and the User struct containing the new user's data.
-	err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
+	// launch a goroutine which runs an anon function that sends the welcome mail
+	go func() {
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
+		if err != nil {
+			// if there is an error sending, use app.logger.PrintError()
+			// to manage it instead of app.servererrorresponse() helper
+			app.logger.PrintError(err, nil)
+		}
+	}()
 
-	// write json response containing the user data along with 201 code
-	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
+	// write json response containing the user data along with 202 code
+	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
