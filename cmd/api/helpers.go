@@ -186,3 +186,19 @@ func (app *application) readInt(qs url.Values, key string, defaultValue int, v *
 	// otherwise return the converted int value
 	return i
 }
+
+// catching panics from background goroutines
+// background helper accepts an arbitary function as a param
+func (app *application) background(fn func()) {
+	// launch background goroutine
+	go func() {
+		// recover any panic
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.PrintError(fmt.Errorf("%s", err), nil)
+			}
+		}()
+		// execute the arbitrary function that was passed as the param
+		fn()
+	}()
+}
