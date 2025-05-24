@@ -39,7 +39,7 @@ func (app *application) serve() error {
 		s := <-quit
 
 		// log a msg to say that the signal has been caught
-		app.logger.PrintInfo("shutting down server", map[string]string{
+		app.logger.PrintInfo("caught signal", map[string]string{
 			"signal": s.String(),
 		})
 
@@ -47,10 +47,24 @@ func (app *application) serve() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// call shutdown() on server, passing the context
-		// it replaces the exit() previously because it is dynamic
-		// in which it returns success or error
-		shutdownError <- srv.Shutdown(ctx)
+		// call shutdown() on server
+		// but sends on the shutdownchannel
+		// if it returns success or error
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			shutdownError <- err
+		}
+
+		// log message to say waiting for any bg gorouts
+		// to finish tasks
+		app.logger.PrintInfo("completing background tasks", map[string]string{
+			"addr": srv.Addr,
+		})
+
+		// call wait() to block until waitgroup() counter is 0
+		// then return nil when it is done with no issues
+		app.wg.Wait()
+		shutdownError <- nil
 	}()
 
 	// starting server msg

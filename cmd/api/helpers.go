@@ -190,8 +190,14 @@ func (app *application) readInt(qs url.Values, key string, defaultValue int, v *
 // catching panics from background goroutines
 // background helper accepts an arbitary function as a param
 func (app *application) background(fn func()) {
+	// increment waitgroup() counter
+	app.wg.Add(1)
+
 	// launch background goroutine
 	go func() {
+		// defer to decrement waitgroup counter before the goroutine returns
+		defer app.wg.Done()
+
 		// recover any panic
 		defer func() {
 			if err := recover(); err != nil {
