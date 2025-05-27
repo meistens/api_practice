@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/meistens/api_practice/internal/data"
 	"github.com/meistens/api_practice/internal/validator"
@@ -51,7 +52,6 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	err = app.models.Users.Insert(user)
 	if err != nil {
 		switch {
-		// something causing it to return server error instead of custom msg
 		case errors.Is(err, data.ErrDuplicateEmail):
 			v.AddError("email", "a user with this email address already exists")
 			app.failedValidationResponse(w, r, v.Errors)
@@ -61,11 +61,26 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// after user record has been created in the db, generate a new
+	// activation token for the user
+	token, err := app.models.Tokens.New(user.ID, 3*24*time.Hour, data.ScopeActivation)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
 	// Call the Send() method on our Mailer, passing in the user's email address,
 	// name of the template file, and the User struct containing the new user's data.
 	// launch a goroutine which runs an anon function that sends the welcome mail
 	app.background(func() {
-		err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
+		// as there are multiple pieces of data that we want to pass to our
+		// email template, create a map to hold the data
+		data := map[string]any{
+			"activationToken": token.Plaintext,
+			"userID":          user.ID,
+		}
+
+		err = app.mailer.Send(user.Email, "user_welcome.tmpl", data)
 		if err != nil {
 			// if there is an error sending, use app.logger.PrintError()
 			// to manage it instead of app.servererrorresponse() helper

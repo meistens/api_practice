@@ -13,7 +13,7 @@ import (
 
 // define constants for the token scope
 const (
-	scopeActivation = "activation"
+	ScopeActivation = "activation"
 )
 
 // define a token struct to hold the data for an individual token
