@@ -30,6 +30,9 @@ func (app *application) routes() http.Handler {
 	// users
 	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)
 
+	// authentication
+	router.HandlerFunc(http.MethodPost, "/v1/tokens/authentication", app.createAuthTokenHandler)
+
 	// return the httprouter instance, but with the panic recovery
 	// middleware, but now wrapped with ratelimit middleware
 	return app.recoverPanic(app.rateLimit(router))
