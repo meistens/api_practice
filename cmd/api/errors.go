@@ -71,3 +71,11 @@ func (app *application) invalidCredentialsResponse(w http.ResponseWriter, r *htt
 	message := "invalid auth. credentials"
 	app.errorResponse(w, r, http.StatusUnauthorized, message)
 }
+
+// invalid auth. token, uses 401 BUT for this instance
+func (app *application) invalidAuthTokenResponse(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("WWW-Authenticate", "Bearer")
+
+	message := "invalid or missing authentication token"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}

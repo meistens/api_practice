@@ -35,5 +35,6 @@ func (app *application) routes() http.Handler {
 
 	// return the httprouter instance, but with the panic recovery
 	// middleware, but now wrapped with ratelimit middleware
-	return app.recoverPanic(app.rateLimit(router))
+	// use authenticate() middleware on all requests
+	return app.recoverPanic(app.rateLimit(app.authenticate(router)))
 }

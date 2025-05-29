@@ -23,6 +23,8 @@ type UserModel struct {
 	DB *sql.DB
 }
 
+var AnonUser = &User{}
+
 type User struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -40,6 +42,11 @@ type User struct {
 type password struct {
 	plaintext *string
 	hash      []byte
+}
+
+// check if a user instance is the anon
+func (u *User) isAnon() bool {
+	return u == AnonUser
 }
 
 // set() calculates bcrypt hash of plaintext password
