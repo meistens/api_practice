@@ -45,7 +45,7 @@ type password struct {
 }
 
 // check if a user instance is the anon
-func (u *User) isAnon() bool {
+func (u *User) IsAnon() bool {
 	return u == AnonUser
 }
 
