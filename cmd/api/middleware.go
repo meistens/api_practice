@@ -171,3 +171,35 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func (app *application) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
+	// rather than return, assign it to a variable
+	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// use contextgetuser() to retrieve user info from the req. context
+		user := app.contextGetUser(r)
+
+		// if the user is not activated, call inactiveaccountres()
+		if !user.Activated {
+			app.inactiveAccResponse(w, r)
+			return
+		}
+
+		// call next handler in the chain
+		next.ServeHTTP(w, r)
+	})
+	// authenticate and activate, it shuld be outside the func. i know...
+	return app.requireAuthUser(fn)
+}
+
+func (app *application) requireAuthUser(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+
+		if user.IsAnon() {
+			app.authRequiredReponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
