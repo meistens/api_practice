@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"database/sql"
+	"expvar"
 	"flag"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -16,8 +18,6 @@ import (
 )
 
 // declare string containing semver
-// will be automatically generated later in book, but for now
-// hardcode
 const version = "1.0.0"
 
 // define a config struct to hold all config settings for app
@@ -121,6 +121,25 @@ func main() {
 	// main() exits
 	defer db.Close()
 	logger.PrintInfo("db conn. pool established", nil)
+
+	// publish new version variable in expvar handler containing the app.
+	// version num.
+	expvar.NewString("version").Set(version)
+
+	// publish number of active goroutines
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+
+	// publish db connection pool
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+
+	// publish current unix timestamp
+	expvar.Publish("timestamp", expvar.Func(func() any {
+		return time.Now().Unix()
+	}))
 
 	// declare an instance of the app struct
 	// containing the config struct, logger, models
