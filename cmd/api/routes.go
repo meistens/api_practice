@@ -1,6 +1,7 @@
 package main
 
 import (
+	"expvar"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -36,6 +37,9 @@ func (app *application) routes() http.Handler {
 
 	// authentication
 	router.HandlerFunc(http.MethodPost, "/v1/tokens/authentication", app.createAuthTokenHandler)
+
+	// debug
+	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
 
 	// return the httprouter instance, but with the panic recovery
 	// middleware, but now wrapped with ratelimit middleware
