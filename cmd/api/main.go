@@ -76,9 +76,9 @@ func main() {
 	// if no other flags are provided
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (dev|stage|prod)")
-	// read dsn value from the db-dsn flag into the config struct
-	// default flag dev is used if none is provided
-	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("GREENLIGHT_DB_DSN"), "PostreSQL DSN")
+	// use empty string "" as the default value for the db-dsn line
+	// instead of os.GETENV(...)
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "", "PostreSQL DSN")
 	// read conn. pool settings from cmd flags into the config struct
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")

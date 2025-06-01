@@ -14,7 +14,7 @@ confirm:
 ## run/api: run the cmd/api application/start api
 .PHONY: run/api
 run/api:
-	@go run ./cmd/api
+	@go run ./cmd/api -db-dsn=${GREENLIGHT_DB_DSN}
 
 ## db/psql: connect to the db using psql
 .PHONY: db/psql
