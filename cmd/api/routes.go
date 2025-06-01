@@ -45,5 +45,5 @@ func (app *application) routes() http.Handler {
 	// middleware, but now wrapped with ratelimit middleware
 	// use authenticate() middleware on all requests
 	// now with CORS, POSITIONING IS IMPORTANT!!!!
-	return app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router))))
+	return app.metrics(app.recoverPanic(app.enableCORS(app.rateLimit(app.authenticate(router)))))
 }
