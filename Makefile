@@ -1,16 +1,16 @@
-run:
+run/api:
 	@go run ./cmd/api
 
 # modify if not running locally
-psql:
+db/psql:
 	psql ${GREENLIGHT_DB_DSN}
 
 # migrations, with option to pass args just in case of personal testing/stuff
 # name=args
-migration:
+db/migrations/new:
 	@echo 'Creating migration files for ${name}'
 	migrate create -seq -ext=.sql -dir=./migrations ${name}
 
-up:
+db/migrations/up:
 	@echo 'Running up migrations...'
 	migrate -path ./migrations -database ${GREENLIGHT_DB_DSN} up
