@@ -1,3 +1,6 @@
+# include variables from the env file
+include .envrc
+
 ## help: print this help msg
 .PHONY: help
 help:
