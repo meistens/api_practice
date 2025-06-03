@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"expvar"
 	"flag"
+	"fmt"
 	"os"
 	"runtime"
 	"strings"
@@ -103,7 +104,17 @@ func main() {
 		return nil
 	})
 
+	// create a new version bool flag with the default value of false
+	displayVersion := flag.Bool("version", false, "Display version and exit")
+
 	flag.Parse()
+
+	// if version flag value is true, print out the version number
+	// and exit
+	if *displayVersion {
+		fmt.Printf("Version:\t%s\n", version)
+		os.Exit(0)
+	}
 
 	// init. a new logger which writes to stdout
 	// prefixed with current date and time
