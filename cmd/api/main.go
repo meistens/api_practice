@@ -18,11 +18,11 @@ import (
 	"github.com/meistens/api_practice/internal/mailer"
 )
 
-// declare string containing semver
-const version = "1.0.0"
-
 // buildtime variable to hold the executable binary build time
-var buildTime string
+var (
+	buildTime string
+	version   string
+)
 
 // define a config struct to hold all config settings for app
 // for now, these inside will do (VC if more is added to see)
