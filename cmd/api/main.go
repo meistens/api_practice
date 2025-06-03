@@ -21,6 +21,9 @@ import (
 // declare string containing semver
 const version = "1.0.0"
 
+// buildtime variable to hold the executable binary build time
+var buildTime string
+
 // define a config struct to hold all config settings for app
 // for now, these inside will do (VC if more is added to see)
 // env (dev, stage, prod), port self-explanatory
@@ -113,6 +116,8 @@ func main() {
 	// and exit
 	if *displayVersion {
 		fmt.Printf("Version:\t%s\n", version)
+		// print out the contents of the buildTime variable
+		fmt.Printf("Build time:\t%s\n", buildTime)
 		os.Exit(0)
 	}
 
