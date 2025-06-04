@@ -1,4 +1,4 @@
-http://ip {
+http://ip_name(if any, NOT IP!!!) {
     respond /debug/* "Not Permitted" 403
     reverse_proxy localhost:4000
 }
