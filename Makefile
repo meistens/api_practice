@@ -87,3 +87,13 @@ git_description = $(shell git describe --always --dirty --tags --long)
 build/api:
 	@echo 'Building cmd/api...'
 	GOOS=linux GOARCH=amd64 go build -ldflags=${linker_flags} -o=./bin/linux_amd64/api ./cmd/api
+
+# ============================================================================== #
+# PRODUCTION
+# ============================================================================== #
+production_host_ip = 'IP_HERE'
+
+## production/connect: connect to the production server
+.PHONY: production/connect
+production/connect:
+	ssh greenlight@${production_host_ip}
