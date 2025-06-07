@@ -68,3 +68,72 @@ func (app *application) createAuthTokenHandler(w http.ResponseWriter, r *http.Re
 		app.serverErrorResponse(w, r, err)
 	}
 }
+
+// generate password reset token, to be sent to user mail address
+func (app *application) createPassResetHandler(w http.ResponseWriter, r *http.Request) {
+	// parse and validate user email address
+	var input struct {
+		Email string `json:"email"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	v := validator.New()
+
+	if data.ValidateEmail(v, input.Email); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// retieve corresponding user record for the email address
+	// if not found, return an error message to the client
+	user, err := app.models.Users.GetByEmail(input.Email)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			v.AddError("email", "no matching email address found")
+			app.failedValidationResponse(w, r, v.Errors)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+	// return an error msg if user is not activated
+	if !user.Activated {
+		v.AddError("email", "user account must be activated")
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+	// if not all above, create a new password reset token with a 45-min expiry time
+	token, err := app.models.Tokens.New(user.ID, 45*time.Minute, data.ScoprPassReset)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+	// email user with their password reset token in the background
+	app.background(func() {
+		data := map[string]interface{}{
+			"passwordResetToken": token.Plaintext,
+		}
+
+		// since mail address may be case sensitive, either correct user misuse
+		// or select from the db since that was take care of at the db level
+		// and we are going with selecting from db after getting thei input
+		err = app.mailer.Send(user.Email, "token_password_reset.tmpl", data)
+		if err != nil {
+			app.logger.PrintError(err, nil)
+		}
+	})
+
+	// send a 202 and confirmation msg to the user
+	env := envelope{"message": "an email will be sent to you containing the password reset instructions"}
+
+	err = app.writeJSON(w, http.StatusAccepted, env, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}

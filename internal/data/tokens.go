@@ -15,6 +15,7 @@ import (
 const (
 	ScopeActivation     = "activation"
 	ScopeAuthentication = "authentication"
+	ScoprPassReset      = "password-reset"
 )
 
 // define a token struct to hold the data for an individual token

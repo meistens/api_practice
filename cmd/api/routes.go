@@ -14,8 +14,6 @@ func (app *application) routes() http.Handler {
 	// convert the notFoundResponse() helper to a http.Handler using HandlerFunc() adapter
 	// then set as a custom err handler for 404
 	router.NotFound = http.HandlerFunc(app.notFoundResponse)
-
-	// same shii, with other responses too
 	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedResponse)
 
 	// register relevant methods, patterns and handler funcs for
@@ -37,6 +35,12 @@ func (app *application) routes() http.Handler {
 
 	// authentication
 	router.HandlerFunc(http.MethodPost, "/v1/tokens/authentication", app.createAuthTokenHandler)
+
+	// PUT /v1/users/password endpoint
+	router.HandlerFunc(http.MethodPut, "/v1/users/password", app.updateUserPassHandler)
+
+	// password reset endpoint
+	router.HandlerFunc(http.MethodPost, "/v1/tokens/password-reset", app.createPassResetHandler)
 
 	// debug
 	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
