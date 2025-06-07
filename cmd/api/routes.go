@@ -42,6 +42,8 @@ func (app *application) routes() http.Handler {
 	// password reset endpoint
 	router.HandlerFunc(http.MethodPost, "/v1/tokens/password-reset", app.createPassResetHandler)
 
+	router.HandlerFunc(http.MethodPost, "/v1/tokens/activation", app.createActivationTokenHandler)
+
 	// debug
 	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
 
