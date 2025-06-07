@@ -30,6 +30,46 @@ confirm:
 run/api:
 	@go run ./cmd/api -db-dsn=${GREENLIGHT_DB_DSN}
 
+## run/api/profiling: run the api with profiling enabled
+.PHONY: run/api/profiling
+run/api/profiling:
+	@go run ./cmd/api -db-dsn=${GREENLIGHT_DB_DSN} -profiling-enabled=true -profiling-port=5000
+
+## profile/cpu: capture CPU profile for 30 seconds
+.PHONY: profile/cpu
+profile/cpu:
+	./scripts/profile.sh cpu
+
+## profile/heap: capture heap memory profile
+.PHONY: profile/heap
+profile/heap:
+	./scripts/profile.sh heap
+
+## profile/goroutines: capture goroutine profile
+.PHONY: profile/goroutines
+profile/goroutines:
+	./scripts/profile.sh goroutine
+
+## profile/trace: capture execution trace
+.PHONY: profile/trace
+profile/trace:
+	./scripts/profile.sh trace
+
+## profile/all: capture all available profiles
+.PHONY: profile/all
+profile/all:
+	./scripts/profile.sh all
+
+## profile/metrics: view expvar metrics
+.PHONY: profile/metrics
+profile/metrics:
+	./scripts/profile.sh metrics
+
+## profile/help: show profiling help
+.PHONY: profile/help
+profile/help:
+	./scripts/profile.sh help
+
 ## db/psql: connect to the db using psql
 .PHONY: db/psql
 db/psql:
