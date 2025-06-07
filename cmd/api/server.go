@@ -21,6 +21,13 @@ func (app *application) serve() error {
 		WriteTimeout: 30 * time.Second,
 	}
 
+	// create context for coordinating shutdow between servers
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// start profiing server with shared context
+	_ = app.startProfilingServer(ctx)
+
 	// create shutdownerror channel
 	shutdownError := make(chan error)
 
@@ -42,6 +49,9 @@ func (app *application) serve() error {
 		app.logger.PrintInfo("caught signal", map[string]string{
 			"signal": s.String(),
 		})
+
+		// cancel context to signal profiling server to shutdown
+		cancel()
 
 		// create a context with a 5-sec timeout
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
