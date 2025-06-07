@@ -97,8 +97,8 @@ func main() {
 	// Mailtrap settings as the default values.
 	flag.StringVar(&cfg.smtp.host, "smtp-host", "smtp.mailtrap.io", "SMTP host")
 	flag.IntVar(&cfg.smtp.port, "smtp-port", 2525, "SMTP port")
-	flag.StringVar(&cfg.smtp.username, "smtp-username", "c9e57d048da0c1", "SMTP username")
-	flag.StringVar(&cfg.smtp.password, "smtp-password", "4942bda56789a2", "SMTP password")
+	flag.StringVar(&cfg.smtp.username, "smtp-username", "29e8786102833f", "SMTP username")
+	flag.StringVar(&cfg.smtp.password, "smtp-password", "c03c8a4553f39e", "SMTP password")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <no-reply@testmail.net>", "SMTP sender")
 
 	// new flag for cors-trusted-origins
