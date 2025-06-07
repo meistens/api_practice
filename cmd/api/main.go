@@ -31,9 +31,11 @@ var (
 type config struct {
 	port int
 	env  string
-	// add a db struct field to hold the config settings for the db conn. pool
-	// add other fields for the conn. pool
-	//
+	// profiling
+	profiling struct {
+		enabled bool
+		port    int
+	}
 	db struct {
 		dsn          string
 		maxOpenConns int
@@ -88,6 +90,10 @@ func main() {
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgesSQL max connection idle time")
 
+	// profiling flag
+	flag.BoolVar(&cfg.profiling.enabled, "profiling-enabled", false, "Enable profiling server")
+	flag.IntVar(&cfg.profiling.port, "profiling-port", 5000, "Profiling server port")
+
 	// Create command line flags to read the setting values into the config struct.
 	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
 	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
@@ -119,6 +125,18 @@ func main() {
 		// print out the contents of the buildTime variable
 		fmt.Printf("Build time:\t%s\n", buildTime)
 		os.Exit(0)
+	}
+
+	// validate profiling configuration
+	if cfg.profiling.enabled {
+		if cfg.profiling.port == cfg.port {
+			fmt.Fprintf(os.Stderr, "Error: profiling port (%d) cannot be the same as API port (%d)\n", cfg.profiling.port, cfg.port)
+			os.Exit(1)
+		}
+		if cfg.profiling.port < 1024 || cfg.profiling.port > 65535 {
+			fmt.Fprintf(os.Stderr, "Error: profiling port (%d) must be between 1024 and 65535\n", cfg.profiling.port)
+			os.Exit(1)
+		}
 	}
 
 	// init. a new logger which writes to stdout
@@ -165,6 +183,9 @@ func main() {
 		models: data.NewModels(db),
 		mailer: mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender),
 	}
+
+	// optimize runtime settings
+	app.optimizeRuntime()
 
 	// call app.serve() to start server
 	err = app.serve()
