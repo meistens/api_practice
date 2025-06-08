@@ -1,0 +1,47 @@
+# Binaries
+bin/
+*.exe
+
+# Development files
+.envrc
+.env
+.env.local
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Test files
+*_test.go
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# SSL certificates (for local dev)
+ssl-certs/
+
+# Vendor (we'll download fresh in container)
+vendor/
+
+# Build artifacts
+*.tar.gz
+*.zip

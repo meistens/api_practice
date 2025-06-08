@@ -87,6 +87,22 @@ db/migrations/up: confirm
 	@echo 'Running up migrations...'
 	migrate -path ./migrations -database ${GREENLIGHT_DB_DSN} up
 
+## db/start: start the PostgreSQL database container with SSL
+.PHONY: db/start
+db/start:
+	@echo 'Starting PostgreSQL database container...'
+	podman-compose up -d postgres
+
+## db/stop: stop the PostgreSQL database container
+.PHONY: db/stop
+db/stop:
+	@echo 'Stopping PostgreSQL database container...'
+	podman-compose down
+
+## db/logs: view PostgreSQL database logs
+.PHONY: db/logs
+db/logs:
+	podman-compose logs -f postgres
 
 # ============================================================================== #
 # QUALITY CONTROL
